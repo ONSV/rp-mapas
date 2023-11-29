@@ -87,7 +87,7 @@ sinistros_dia_hora <- fatais_rp |>
   )
 
 
-dia_plot <- 
+plot_dia <- 
   sinistros_dia_hora |> 
   count(dia_semana) |>
   mutate(dia_semana = fct_rev(dia_semana)) |> 
@@ -102,7 +102,8 @@ dia_plot <-
   theme(
     text = element_text(color = "grey20", family = "Helvetica"),
     plot.title.position = "plot",
-    panel.grid.major.y = element_blank()
+    panel.grid.major.y = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
   ) +
   geom_text(
     aes(label = n),
@@ -118,7 +119,7 @@ dia_plot <-
     y = NULL
   )
 
-hora_plot <- sinistros_dia_hora |> 
+plot_hora <- sinistros_dia_hora |> 
   count(hora) |> 
   ggplot(aes(x = hora, y = n)) +
   geom_segment(
@@ -141,10 +142,11 @@ hora_plot <- sinistros_dia_hora |>
     panel.grid.major.x = element_blank(),
     panel.grid.minor.y = element_blank(),
     text = element_text(color = "grey20", family = "Helvetica"),
-    plot.title.position = "plot"
+    plot.title.position = "plot",
+    plot.background = element_rect(fill = "white", color = NA)
   )
 
-hora_dia_plot <- sinistros_dia_hora |> 
+plot_hora_dia <- sinistros_dia_hora |> 
   count(hora, dia_semana, .drop = FALSE) |>
   mutate(dia_semana = fct_rev(dia_semana)) |> 
   ggplot(aes(x = hora, y = dia_semana, fill = n)) +
@@ -160,7 +162,8 @@ hora_dia_plot <- sinistros_dia_hora |>
     panel.grid.minor = element_blank(),
     text = element_text(color = "grey20", family = "Helvetica"),
     plot.title.position = "plot",
-    plot.caption = element_text(hjust = 0.93)
+    plot.caption = element_text(hjust = 0.93),
+    plot.background = element_rect(fill = "white", color = NA)
   ) +
   labs(
     x = "Horário",
@@ -192,7 +195,8 @@ plot_vitimas_idade <- obitos_rp |>
   theme(
     text = element_text(color = "grey20", family = "Helvetica"),
     plot.title.position = "plot",
-    panel.grid.major.y = element_blank()
+    panel.grid.major.y = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
   )
 
 plot_vitimas_modal <- obitos_rp |> 
@@ -223,7 +227,8 @@ plot_vitimas_modal <- obitos_rp |>
   theme(
     text = element_text(color = "grey20", family = "Helvetica"),
     plot.title.position = "plot",
-    panel.grid.major.y = element_blank()
+    panel.grid.major.y = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
   )
 
 combinacoes_idade_modal <- obitos_rp |> 
@@ -259,14 +264,45 @@ plot_vitimas_idade_modal <-
     legend.position = "none",
     text = element_text(color = "grey20", family = "Helvetica"),
     plot.title.position = "plot",
-    panel.grid.major = element_blank()
+    panel.grid.major = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
   ) +
   labs(
-    title = "Quantidade de vítimas fatais por modo de transporte faixa etária",
+    title = "Quantidade de vítimas fatais por modo de transporte e faixa etária",
     subtitle = "Período entre jan-2015 e out-2023 em Ribeirão Preto - SP",
     caption = "Fonte: ONSV, com base em INFOSIGA-SP (2023)",
     x = "Faixa etária",
     y = NULL
   )
 
+graficos <- list(
+  plot_dia,
+  plot_hora,
+  plot_hora_dia,
+  plot_vitimas_idade,
+  plot_vitimas_modal,
+  plot_vitimas_idade_modal
+)
 
+graficos_nomes <- paste0(
+  "plot/",
+  c(
+    "plot_dia",
+    "plot_hora",
+    "plot_dia_hora",
+    "plot_vitimas_idade",
+    "plot_vitimas_modal",
+    "plot_vitimas_idade_modal"
+  ),
+  ".png"
+)
+
+walk2(
+  graficos_nomes,
+  graficos,
+  ggsave,
+  width = 6,
+  height = 3.5,
+  device = "png",
+  dpi = 300
+)
