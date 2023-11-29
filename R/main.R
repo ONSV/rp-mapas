@@ -4,6 +4,7 @@ library(readxl)
 library(janitor)
 library(hms)
 library(onsvplot)
+library(geobr)
 
 # Import ------------------------------------------------------------------
 
@@ -306,3 +307,14 @@ walk2(
   device = "png",
   dpi = 300
 )
+
+# Bases cartográficas -----------------------------------------------------
+
+rp_limites <- read_municipality(code_muni = 3543402, year = 2022)
+
+areas_urbanas <- read_urban_area(year = 2015)
+
+st_write(rp_limites, "data/rp_limites.gpkg")
+
+st_write(areas_urbanas, "data/areas_urbanas.gpkg")
+
