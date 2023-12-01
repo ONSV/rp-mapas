@@ -60,7 +60,16 @@ obitos_rp_sf <- obitos_rp |>
   st_as_sf(coords = c("long_geo", "lat_geo")) |> 
   st_set_crs(value = 4674)
 
+naofatais_rp_sf_horafix <- naofatais_rp_sf |> 
+  mutate(hora_do_acidente = as.character(hora_do_acidente))
+
 st_write(naofatais_rp_sf, "data/naofatais_rp.gpkg", append = FALSE)
+
+st_write(
+  naofatais_rp_sf_horafix,
+  "data/naofatais_rp_sf_horafix.gpkg",
+  append = FALSE
+)
 
 st_write(obitos_rp_sf, "data/obitos_rp.gpkg", append = FALSE)
 
