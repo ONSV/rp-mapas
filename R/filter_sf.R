@@ -63,9 +63,20 @@ map2(
 )
 
 map2(
- fatais_tipos,
+  fatais_tipos,
   paste0(
     "data/sinistro_fatal_",
+    c("colisao", "atropelamento", "choque"),
+    ".gpkg"
+  ),
+  st_write,
+  append = FALSE
+)
+
+map2(
+  sinistros_tipos,
+  paste0(
+    "data/sinistro_",
     c("colisao", "atropelamento", "choque"),
     ".gpkg"
   ),
