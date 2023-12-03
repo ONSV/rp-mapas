@@ -285,13 +285,133 @@ plot_vitimas_idade_modal <-
     y = NULL
   )
 
+fatais_hora_tipo_modal <- obitos_rp |> 
+  select(
+    hora_do_acidente,
+    tipo_de_acidente,
+    tipo_veic = tipo_do_veiculo_da_vitima
+  ) |> 
+  mutate(hora_do_acidente = parse_hms(hora_do_acidente))
+
+graves_hora_tipo_modal <- naofatais_rp |> 
+  filter(pessoas_envolvidas_grave > 0) |> 
+  select(
+    tipo_de_acidente = tipo_sinistro,
+    hora_do_acidente,
+    starts_with("veiculos_envolvidos")
+  )
+
+data_plot_hora_tipo <- fatais_hora_tipo_modal |> 
+  select(-tipo_veic) |> 
+  bind_rows(
+    graves_hora_tipo_modal |>
+      select(tipo_de_acidente, hora_do_acidente)
+  ) |> 
+  mutate(
+    hora = hour(hora_do_acidente),
+    tipo_de_acidente = tolower(tipo_de_acidente),
+    tipo_de_acidente = if_else(
+      tipo_de_acidente == "atropelamento pedestre",
+      "atropelamento",
+      tipo_de_acidente
+    ),
+    tipo_de_acidente = if_else(
+      tipo_de_acidente == "colisao",
+      "colisão",
+      tipo_de_acidente
+    )
+  ) |>
+  filter(tipo_de_acidente %in% c("colisão", "choque", "atropelamento"))
+
+plot_hora_tipo <- data_plot_hora_tipo |> 
+  count(hora, tipo_de_acidente, .drop = FALSE) |> 
+  ggplot(aes(x = hora, y = tipo_de_acidente, fill = n)) +
+  geom_tile() +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  geom_text(aes(label = n), size = 2.0, color = "grey20") +
+  theme_minimal(base_size = 8) +
+  coord_fixed() +
+  theme(
+    legend.position = "none",
+    text = element_text(color = "grey20", family = "Helvetica"),
+    plot.title.position = "plot",
+    panel.grid.major = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  labs(
+    title = "Quantidade sinistros graves e fatais por tipo e hora da ocorrência",
+    subtitle = "Período entre jan-2015 e out-2023 em Ribeirão Preto - SP",
+    caption = "Fonte: ONSV, com base em INFOSIGA-SP (2023)",
+    x = "Hora",
+    y = NULL
+  ) +
+  scale_x_continuous(breaks = seq(0, 23, 1))
+
+graves_hora_modal <- graves_hora_tipo_modal |> 
+  mutate(hora = hour(hora_do_acidente)) |> 
+  select(hora, starts_with("veiculos")) |> 
+  pivot_longer(-hora, names_to = "tipo_veic", values_to = "n") |> 
+  mutate(tipo_veic = str_remove(tipo_veic, "veiculos_envolvidos_"))
+
+fatais_hora_modal <- fatais_hora_tipo_modal |> 
+  mutate(hora = hour(hora_do_acidente), tipo_veic = tolower(tipo_veic)) |> 
+  count(tipo_veic, hora, .drop = FALSE)
+
+plot_hora_modal <- graves_hora_modal |> 
+  bind_rows(fatais_hora_modal) |> 
+  group_by(hora, tipo_veic) |>
+  summarise(n = sum(n)) |>
+  filter(
+    tipo_veic %in% c(
+      "automovel",
+      "bicicleta",
+      "caminhao",
+      "motocicleta",
+      "onibus",
+      "pedestre"
+    )
+  ) |> 
+  ggplot(aes(x = hora, y = tipo_veic, fill = n)) +
+  geom_tile() +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  geom_text(aes(label = n), size = 2.0, color = "grey20") +
+  theme_minimal(base_size = 8) +
+  coord_fixed() +
+  theme(
+    legend.position = "none",
+    text = element_text(color = "grey20", family = "Helvetica"),
+    plot.title.position = "plot",
+    panel.grid.major = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  labs(
+    title = "Quantidade sinistros graves e fatais por modo de transporte e hora",
+    subtitle = "Período entre jan-2015 e out-2023 em Ribeirão Preto - SP",
+    caption = "Fonte: ONSV, com base em INFOSIGA-SP (2023)",
+    x = "Hora",
+    y = NULL
+  ) +
+  scale_x_continuous(breaks = seq(0, 23, 1)) +
+  scale_y_discrete(
+    labels = c(
+      "automóvel",
+      "bicicleta",
+      "caminhão",
+      "motocicleta",
+      "ônibus",
+      "pedestre"
+    )
+  )
+
 graficos <- list(
   plot_dia,
   plot_hora,
   plot_hora_dia,
   plot_vitimas_idade,
   plot_vitimas_modal,
-  plot_vitimas_idade_modal
+  plot_vitimas_idade_modal,
+  plot_hora_tipo,
+  plot_hora_modal
 )
 
 graficos_nomes <- paste0(
@@ -302,7 +422,9 @@ graficos_nomes <- paste0(
     "plot_dia_hora",
     "plot_vitimas_idade",
     "plot_vitimas_modal",
-    "plot_vitimas_idade_modal"
+    "plot_vitimas_idade_modal",
+    "plot_hora_tipo",
+    "plot_hora_modal"
   ),
   ".png"
 )
